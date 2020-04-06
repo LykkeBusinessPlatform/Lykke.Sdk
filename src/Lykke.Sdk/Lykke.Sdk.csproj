@@ -4,6 +4,13 @@
     <TargetFrameworks>netcoreapp3.1;netcoreapp3.0;netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
+    <Authors>Lykke Business</Authors>
+    <Company>Lykke Business</Company>
+    <Product>LykkeBiz.Sdk</Product>
+    <Description>Sdk library for common Lykke Business components</Description>
+    <PackageIconUrl>https://avatars3.githubusercontent.com/u/14153330?v=3&amp;s=200</PackageIconUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>LykkeBiz.Sdk</PackageId>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
