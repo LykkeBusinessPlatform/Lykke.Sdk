@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using Autofac;
 using JetBrains.Annotations;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.Log;
@@ -9,7 +7,6 @@ using Lykke.Sdk.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
 
 namespace Lykke.Sdk
 {
@@ -84,13 +81,7 @@ namespace Lykke.Sdk
 #error unknown target framework
 #endif
 
-                app.UseSwagger(c =>
-                {
-                    c.PreSerializeFilters.Add((swagger, httpReq) =>
-                    {
-                        swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = $"{httpReq.Scheme}://{httpReq.Host.Value}" } };
-                    });
-                });
+                app.UseSwagger();
                 app.UseSwaggerUI(x =>
                 {
                     x.RoutePrefix = "swagger/ui";
