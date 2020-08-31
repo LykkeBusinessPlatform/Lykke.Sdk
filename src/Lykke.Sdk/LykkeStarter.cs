@@ -15,8 +15,6 @@ namespace Lykke.Sdk
     [PublicAPI]
     public static class LykkeStarter
     {
-        private static object _locker = new object();
-
         /// <summary>DEBUG/RELEASE mode flag.</summary>
         public static bool IsDebug { get; private set; }
 
@@ -48,7 +46,6 @@ namespace Lykke.Sdk
 
             try
             {
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
                 var host = Host.CreateDefaultBuilder()
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseServiceProviderFactory(new AutofacServiceProviderFactory())
@@ -63,17 +60,6 @@ namespace Lykke.Sdk
                     })
                     .Build();
                 await host.RunAsync();
-#elif NETSTANDARD2_0
-                var host = new WebHostBuilder()
-                    .UseKestrel()
-                    .UseUrls($"http://*:{port}")
-                    .UseContentRoot(Directory.GetCurrentDirectory())
-                    .UseStartup<TStartup>()
-                    .Build();
-                await host.RunAsync();
-#else
-#error unknown target framework
-#endif
             }
             catch (Exception ex)
             {

@@ -7,6 +7,7 @@ using Lykke.Sdk.Settings;
 using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Sdk
 {
@@ -17,10 +18,10 @@ namespace Lykke.Sdk
         private readonly IHealthNotifier _healthNotifier;
         private readonly IStartupManager _startupManager;
         private readonly IShutdownManager _shutdownManager;
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IConfigurationRoot _configurationRoot;
         private readonly IReloadingManager<MonitoringServiceClientSettings> _monitoringServiceClientSettings;
-        
+
         private readonly ILog _log;
 
         public AppLifetimeHandler(
@@ -28,7 +29,7 @@ namespace Lykke.Sdk
             IHealthNotifier healthNotifier,
             IStartupManager startupManager,
             IShutdownManager shutdownManager,
-            IHostingEnvironment hostingEnvironment,
+            IWebHostEnvironment hostingEnvironment,
             IConfigurationRoot configurationRoot,
             IReloadingManager<MonitoringServiceClientSettings> monitoringServiceClientSettings)
         {
@@ -54,14 +55,10 @@ namespace Lykke.Sdk
                 _healthNotifier.Notify("Application is started");
 
                 if (_hostingEnvironment.IsDevelopment())
-                {
                     return;
-                }
 
                 if (_monitoringServiceClientSettings?.CurrentValue == null)
-                {
                     throw new ApplicationException("MonitoringServiceClient settings is not provided.");
-                }
 
                 _configurationRoot
                     .RegisterInMonitoringServiceAsync(_monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier)

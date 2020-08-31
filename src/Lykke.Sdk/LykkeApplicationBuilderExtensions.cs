@@ -7,6 +7,7 @@ using Lykke.Sdk.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Sdk
 {
@@ -19,19 +20,13 @@ namespace Lykke.Sdk
         /// <summary>
         /// Configure Lykke service.
         /// </summary>
-        /// <param name="app"></param>
-        public static IApplicationBuilder UseLykkeConfiguration(this IApplicationBuilder app, IApplicationLifetime appLifetime)
-            => app.UseLykkeConfiguration(appLifetime, null);
-
-        /// <summary>
-        /// Configure Lykke service.
-        /// </summary>
         /// <param name="app">IApplicationBuilder implementation.</param>
+        /// <param name="appLifetime">IHostApplicationLifetime instance</param>
         /// <param name="configureOptions">Configuration handler for <see cref="LykkeConfigurationOptions"/></param>
         public static IApplicationBuilder UseLykkeConfiguration(
             this IApplicationBuilder app,
-            IApplicationLifetime appLifetime,
-            Action<LykkeConfigurationOptions> configureOptions)
+            IHostApplicationLifetime appLifetime,
+            Action<LykkeConfigurationOptions> configureOptions = null)
         {
             if (app == null)
             {
@@ -41,7 +36,7 @@ namespace Lykke.Sdk
             var options = new LykkeConfigurationOptions();
             configureOptions?.Invoke(options);
 
-            var env = app.ApplicationServices.GetService<IHostingEnvironment>();
+            var env = app.ApplicationServices.GetService<IWebHostEnvironment>();
 
             if (env.IsDevelopment())
             {
@@ -70,16 +65,10 @@ namespace Lykke.Sdk
                 options.WithMiddleware?.Invoke(app);
 
                 app.UseStaticFiles();
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
                 app.UseRouting();
                 app.UseEndpoints(endpoints => {
                     endpoints.MapControllers();
                 });
-#elif NETSTANDARD2_0
-                app.UseMvc();
-#else
-#error unknown target framework
-#endif
 
                 app.UseSwagger();
                 app.UseSwaggerUI(x =>
@@ -108,11 +97,9 @@ namespace Lykke.Sdk
                 {
                     try
                     {
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
                         Console.WriteLine($"Hosting environment: {env.EnvironmentName}");
                         Console.WriteLine($"Content root path: {env.ContentRootPath}");
                         Console.WriteLine($"Now listening on: http://[::]:{LykkeStarter.Port}");
-#endif
                         app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStarted();
                     }
                     catch (Exception)

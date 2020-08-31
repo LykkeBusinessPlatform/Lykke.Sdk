@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using FluentValidation.AspNetCore;
 using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
+using Lykke.Logs.Loggers.LykkeSanitizing;
 using Lykke.Sdk.ActionFilters;
 using Lykke.Sdk.Controllers;
-using Lykke.Sdk.Health;
 using Lykke.Sdk.Settings;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
@@ -25,18 +23,12 @@ namespace Lykke.Sdk
     /// Extension methods for <see cref="IServiceCollection"/> class.
     /// </summary>
     [PublicAPI]
-    public static class LykkeServiceCollectionContainerBuilderExtensions
+    public static class LykkeServiceCollectionBuilderExtensions
     {
         /// <summary>
         /// Build service provider for Lykke's service.
         /// </summary>
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
         public static (IConfigurationRoot, IReloadingManager<TAppSettings>) BuildServiceProvider<TAppSettings>(
-#elif NETSTANDARD2_0
-        public static IServiceProvider BuildServiceProvider<TAppSettings>(
-#else
-#error unknown target framework
-#endif
             this IServiceCollection services,
             Action<LykkeServiceOptions<TAppSettings>> buildServiceOptions)
 
@@ -70,7 +62,6 @@ namespace Lykke.Sdk
                 services.AddApplicationInsightsTelemetry();
 
             var mvc = services
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
                 .AddControllers(options =>
                 {
                     if (!serviceOptions.HaveToDisableValidationFilter)
@@ -86,25 +77,6 @@ namespace Lykke.Sdk
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
                 })
                 .AddApplicationPart(typeof(IsAliveController).Assembly)
-#elif NETSTANDARD2_0
-                .AddMvc(options =>
-                {
-                    if (!serviceOptions.HaveToDisableValidationFilter)
-                    {
-                        options.Filters.Add(new ActionValidationFilter());
-                    }
-
-                    serviceOptions.ConfigureMvcOptions?.Invoke(options);
-                })
-                .AddJsonOptions(options =>
-                {
-                    options.SerializerSettings.Converters.Add(new StringEnumConverter());
-                    options.SerializerSettings.ContractResolver =
-                        new Newtonsoft.Json.Serialization.DefaultContractResolver();
-                })
-#else
-#error unknown target framework
-#endif
                 .ConfigureApplicationPartManager(partsManager =>
                 {
                     serviceOptions.ConfigureApplicationParts?.Invoke(partsManager);
@@ -198,56 +170,7 @@ namespace Lykke.Sdk
                 throw new InvalidOperationException("MonitoringServiceClient config section is required");
             }
 
-#if (NETCOREAPP3_0 || NETCOREAPP3_1)
             return (configurationRoot, settings);
-#elif NETSTANDARD2_0
-            var builder = new ContainerBuilder();
-            builder.Populate(services);
-
-            builder.ConfigureLykkeContainer(
-                configurationRoot,
-                settings,
-                serviceOptions.RegisterAdditionalModules);
-
-            var container = builder.Build();
-
-            return new AutofacServiceProvider(container);
-#else
-#error unknown target framework
-#endif
-        }
-
-        public static void ConfigureLykkeContainer<TAppSettings>(
-            this ContainerBuilder builder,
-            IConfigurationRoot configurationRoot,
-            IReloadingManager<TAppSettings> settings,
-            Action<IModuleRegistration> registerAdditionalModules = null)
-            where TAppSettings : class, IAppSettings
-        {
-            builder.RegisterInstance(configurationRoot).As<IConfigurationRoot>();
-            builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
-                .As<IReloadingManager<MonitoringServiceClientSettings>>();
-
-            builder.RegisterType<AppLifetimeHandler>()
-                .AsSelf()
-                .SingleInstance();
-
-            builder.RegisterAssemblyModules(settings, registerAdditionalModules, Assembly.GetEntryAssembly());
-
-            builder.RegisterType<EmptyStartupManager>()
-                .As<IStartupManager>()
-                .SingleInstance()
-                .IfNotRegistered(typeof(IStartupManager));
-
-            builder.RegisterType<EmptyShutdownManager>()
-                .As<IShutdownManager>()
-                .SingleInstance()
-                .IfNotRegistered(typeof(IShutdownManager));
-
-            builder.RegisterType<HealthService>()
-                .As<IHealthService>()
-                .SingleInstance()
-                .IfNotRegistered(typeof(IHealthService));
         }
     }
 }
