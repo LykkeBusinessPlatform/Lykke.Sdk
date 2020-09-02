@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
@@ -44,13 +45,13 @@ namespace Lykke.Sdk
             _log = logFactory.CreateLog(this);
         }
 
-        public void HandleStarted()
+        public async Task HandleStartedAsync()
         {
             try
             {
                 _healthNotifier.Notify("Initializing");
 
-                _startupManager.StartAsync().GetAwaiter().GetResult();
+                await _startupManager.StartAsync();
 
                 _healthNotifier.Notify("Application is started");
 
@@ -60,10 +61,8 @@ namespace Lykke.Sdk
                 if (_monitoringServiceClientSettings?.CurrentValue == null)
                     throw new ApplicationException("MonitoringServiceClient settings is not provided.");
 
-                _configurationRoot
-                    .RegisterInMonitoringServiceAsync(_monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier)
-                    .GetAwaiter()
-                    .GetResult();
+                await _configurationRoot.RegisterInMonitoringServiceAsync(
+                    _monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier);
             }
             catch (Exception ex)
             {
@@ -72,11 +71,11 @@ namespace Lykke.Sdk
             }
         }
 
-        public void HandleStopping()
+        public Task HandleStoppingAsync()
         {
             try
             {
-                _shutdownManager.StopAsync().GetAwaiter().GetResult();
+                return _shutdownManager.StopAsync();
             }
             catch (Exception ex)
             {

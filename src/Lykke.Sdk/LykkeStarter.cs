@@ -6,6 +6,7 @@ using JetBrains.Annotations;
 using Lykke.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 
 namespace Lykke.Sdk
 {
@@ -49,6 +50,7 @@ namespace Lykke.Sdk
                 var host = Host.CreateDefaultBuilder()
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+                    .UseSerilog()
                     .ConfigureWebHostDefaults(webBuilder =>
                     {
                         webBuilder.ConfigureKestrel(serverOptions =>

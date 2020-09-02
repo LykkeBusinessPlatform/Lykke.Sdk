@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build
-        run: dotnet build --configuration Release "Lykke.Sdk.sln"
+        run: dotnet build --configuration Release src/Lykke.Sdk/Lykke.Sdk.csproj /p:Version=${GITHUB_REF#refs/tags/}
         
       - name: Create the package
         run: dotnet pack --configuration Release src/Lykke.Sdk/Lykke.Sdk.csproj /p:Version=${GITHUB_REF#refs/tags/}

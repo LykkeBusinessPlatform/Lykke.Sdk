@@ -15,5 +15,13 @@ namespace Lykke.Sdk.Settings
 
         /// <inheritdoc />
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
+
+        /// <inheritdoc />
+        [Optional]
+        public ElasticSearchSettings ElasticSearch { get; set; }
+
+        /// <inheritdoc />
+        [Optional]
+        public TelegramSettings Telegram { get; set; }
     }
 }

@@ -1,31 +1,25 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Lykke.Logs;
+using Lykke.Sdk.Settings;
 
 namespace Lykke.Sdk
 {
     /// <summary>
     /// Lykke logging options class.
     /// </summary>
-    /// <typeparam name="TAppSettings">The type of the application settings.</typeparam>
     [PublicAPI]
     public class LykkeLoggingOptions<TAppSettings>
+        where TAppSettings : IAppSettings
     {
         /// <summary>
         /// Name of the Azure table for logs. Required
         /// </summary>
-        public string AzureTableName { get; set; }
+        public string LogsTableName { get; set; }
 
         /// <summary>
-        /// Azure table connection string resolver delegate for Azure table logs. Required
+        /// Azure table connection string resolver delegate for Azure table logs. Optional
         /// </summary>
         public Func<TAppSettings, string> AzureTableConnectionStringResolver { get; set; }
-
-        /// <summary>
-        /// Extended logging options. Optional
-        /// </summary>
-        [CanBeNull]
-        public Action<ILogBuilder> Extended { get; set; }
 
         /// <summary>
         /// This flag indicates whether empty logging system should be used

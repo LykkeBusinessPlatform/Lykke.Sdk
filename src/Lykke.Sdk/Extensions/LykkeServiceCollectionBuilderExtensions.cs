@@ -6,7 +6,6 @@ using JetBrains.Annotations;
 using Lykke.Common;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
-using Lykke.Logs.Loggers.LykkeSanitizing;
 using Lykke.Sdk.ActionFilters;
 using Lykke.Sdk.Controllers;
 using Lykke.Sdk.Settings;
@@ -35,28 +34,18 @@ namespace Lykke.Sdk
             where TAppSettings : class, IAppSettings
         {
             if (services == null)
-            {
                 throw new ArgumentNullException(nameof(services));
-            }
-
             if (buildServiceOptions == null)
-            {
                 throw new ArgumentNullException(nameof(buildServiceOptions));
-            }
 
             var serviceOptions = new LykkeServiceOptions<TAppSettings>();
 
             buildServiceOptions(serviceOptions);
 
             if (serviceOptions.SwaggerOptions == null)
-            {
                 throw new ArgumentException("Swagger options must be provided.");
-            }
-
             if (serviceOptions.Logs == null)
-            {
                 throw new ArgumentException("Logs configuration delegate must be provided.");
-            }
 
             if (!LykkeStarter.IsDebug)
                 services.AddApplicationInsightsTelemetry();
@@ -96,8 +85,10 @@ namespace Lykke.Sdk
             services.AddSwaggerGen(options =>
             {
                 options.DefaultLykkeConfiguration(
-                    serviceOptions.SwaggerOptions.ApiVersion ?? throw new ArgumentNullException($"{nameof(LykkeSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiVersion)}"),
-                    serviceOptions.SwaggerOptions.ApiTitle ?? throw new ArgumentNullException($"{nameof(LykkeSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiTitle)}"));
+                    serviceOptions.SwaggerOptions.ApiVersion
+                        ?? throw new ArgumentNullException($"{nameof(LykkeSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiVersion)}"),
+                    serviceOptions.SwaggerOptions.ApiTitle
+                        ?? throw new ArgumentNullException($"{nameof(LykkeSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiTitle)}"));
 
                 if (serviceOptions.AdditionalSwaggerOptions.Any())
                 {
@@ -107,8 +98,10 @@ namespace Lykke.Sdk
                             $"{swaggerVersion.ApiVersion}",
                             new OpenApiInfo
                             {
-                                Version = swaggerVersion.ApiVersion ?? throw new ArgumentNullException($"{nameof(serviceOptions.AdditionalSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiVersion)}"),
-                                Title = swaggerVersion.ApiTitle ?? throw new ArgumentNullException($"{nameof(serviceOptions.AdditionalSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiTitle)}")
+                                Version = swaggerVersion.ApiVersion
+                                    ?? throw new ArgumentNullException($"{nameof(serviceOptions.AdditionalSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiVersion)}"),
+                                Title = swaggerVersion.ApiTitle
+                                    ?? throw new ArgumentNullException($"{nameof(serviceOptions.AdditionalSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiTitle)}")
                             });
                     }
                 }
@@ -120,57 +113,56 @@ namespace Lykke.Sdk
                 .AddEnvironmentVariables()
                 .Build();
 
-            var settings = configurationRoot.LoadSettings<TAppSettings>(options =>
+            var settingsManager = configurationRoot.LoadSettings<TAppSettings>(options =>
             {
                 options.SetConnString(x => x.SlackNotifications?.AzureQueue.ConnectionString);
                 options.SetQueueName(x => x.SlackNotifications?.AzureQueue.QueueName);
                 options.SenderName = $"{AppEnvironment.Name} {AppEnvironment.Version}";
             });
 
-            var loggingOptions = new LykkeLoggingOptions<TAppSettings>();
+            services.AddLykkeLogging();
 
+            var loggingOptions = new LykkeLoggingOptions<TAppSettings>();
             serviceOptions.Logs(loggingOptions);
 
-            if (loggingOptions.HaveToUseEmptyLogging)
+            var settings = settingsManager.CurrentValue;
+
+            if (!loggingOptions.HaveToUseEmptyLogging)
             {
-                services.AddEmptyLykkeLogging();
+                var serilogConfiurator = new SerilogConfigurator();
+                if (!LykkeStarter.IsDebug)
+                {
+                    if (loggingOptions.AzureTableConnectionStringResolver != null
+                        && !string.IsNullOrWhiteSpace(loggingOptions.LogsTableName))
+                        serilogConfiurator.AddAzureTable(
+                            settingsManager.ConnectionString(loggingOptions.AzureTableConnectionStringResolver).CurrentValue,
+                            loggingOptions.LogsTableName);
+
+                    if (!string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.ConnectionString)
+                        && !string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.QueueName))
+                        serilogConfiurator.AddAzureQueue(
+                            settings.SlackNotifications.AzureQueue.ConnectionString,
+                            settings.SlackNotifications.AzureQueue.QueueName);
+
+                    if (!string.IsNullOrWhiteSpace(settings.ElasticSearch.ElasticSearchUrl))
+                        serilogConfiurator.AddElasticsearch(settings.ElasticSearch.ElasticSearchUrl);
+
+                    if (!string.IsNullOrWhiteSpace(settings.Telegram.BotToken)
+                        && !string.IsNullOrWhiteSpace(settings.Telegram.ChatId))
+                        serilogConfiurator.AddTelegram(
+                            settings.Telegram.BotToken,
+                            settings.Telegram.ChatId,
+                            settings.Telegram.MinimalLogLevel);
+                }
+                serilogConfiurator.Configure();
             }
-            else
-            {
-                if (string.IsNullOrWhiteSpace(loggingOptions.AzureTableName))
-                {
-                    throw new ArgumentException("Logs.AzureTableName must be provided.");
-                }
 
-                if (loggingOptions.AzureTableConnectionStringResolver == null)
-                {
-                    throw new ArgumentException("Logs.AzureTableConnectionStringResolver must be provided");
-                }
+            serviceOptions.Extend?.Invoke(services, settingsManager);
 
-                if (settings.CurrentValue.SlackNotifications == null)
-                {
-                    throw new ArgumentException("SlackNotifications settings section should be specified, when Lykke logging is enabled");
-                }
-
-                if (LykkeStarter.IsDebug)
-                    services.AddConsoleLykkeLogging(options => { loggingOptions.Extended?.Invoke(options); });
-                else
-                    services.AddLykkeLogging(
-                        settings.ConnectionString(loggingOptions.AzureTableConnectionStringResolver),
-                        loggingOptions.AzureTableName,
-                        settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                        settings.CurrentValue.SlackNotifications.AzureQueue.QueueName,
-                        options => { loggingOptions.Extended?.Invoke(options); });
-            }
-
-            serviceOptions.Extend?.Invoke(services, settings);
-
-            if (settings.CurrentValue.MonitoringServiceClient == null)
-            {
+            if (settings.MonitoringServiceClient == null)
                 throw new InvalidOperationException("MonitoringServiceClient config section is required");
-            }
 
-            return (configurationRoot, settings);
+            return (configurationRoot, settingsManager);
         }
     }
 }

@@ -82,7 +82,7 @@ namespace Lykke.Sdk
                         {
                             if (string.IsNullOrEmpty(swaggerVersion.ApiVersion))
                                 throw new ArgumentNullException($"{nameof(options.AdditionalSwaggerOptions)}.{nameof(LykkeSwaggerOptions.ApiVersion)}");
-                            
+
                             x.SwaggerEndpoint($"/swagger/{swaggerVersion.ApiVersion}/swagger.json", swaggerVersion.ApiVersion);
                         }
                     }
@@ -97,21 +97,16 @@ namespace Lykke.Sdk
                 {
                     try
                     {
-                        Console.WriteLine($"Hosting environment: {env.EnvironmentName}");
-                        Console.WriteLine($"Content root path: {env.ContentRootPath}");
-                        Console.WriteLine($"Now listening on: http://[::]:{LykkeStarter.Port}");
-                        app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStarted();
+                        app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStartedAsync().GetAwaiter().GetResult();
                     }
                     catch (Exception)
                     {
                         appLifetime.StopApplication();
                     }
                 });
-                appLifetime.ApplicationStopping.Register(app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStopping);
-                appLifetime.ApplicationStopped.Register(() =>
-                {
-                    app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStopped();
-                });
+                appLifetime.ApplicationStopping.Register(() =>
+                    app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStoppingAsync().GetAwaiter().GetResult());
+                appLifetime.ApplicationStopped.Register(app.ApplicationServices.GetService<AppLifetimeHandler>().HandleStopped);
             }
             catch (Exception ex)
             {
