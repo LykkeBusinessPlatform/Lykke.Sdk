@@ -138,16 +138,19 @@ namespace Lykke.Sdk
                             settingsManager.ConnectionString(loggingOptions.AzureTableConnectionStringResolver).CurrentValue,
                             loggingOptions.LogsTableName);
 
-                    if (!string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.ConnectionString)
+                    if (settings.SlackNotifications != null
+                        && !string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.ConnectionString)
                         && !string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.QueueName))
                         serilogConfiurator.AddAzureQueue(
                             settings.SlackNotifications.AzureQueue.ConnectionString,
                             settings.SlackNotifications.AzureQueue.QueueName);
 
-                    if (!string.IsNullOrWhiteSpace(settings.ElasticSearch.ElasticSearchUrl))
+                    if (settings.ElasticSearch != null
+                        && !string.IsNullOrWhiteSpace(settings.ElasticSearch.ElasticSearchUrl))
                         serilogConfiurator.AddElasticsearch(settings.ElasticSearch.ElasticSearchUrl);
 
-                    if (!string.IsNullOrWhiteSpace(settings.Telegram.BotToken)
+                    if (settings.Telegram != null
+                        && !string.IsNullOrWhiteSpace(settings.Telegram.BotToken)
                         && !string.IsNullOrWhiteSpace(settings.Telegram.ChatId))
                         serilogConfiurator.AddTelegram(
                             settings.Telegram.BotToken,
