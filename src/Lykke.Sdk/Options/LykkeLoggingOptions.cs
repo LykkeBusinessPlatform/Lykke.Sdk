@@ -12,6 +12,16 @@ namespace Lykke.Sdk
         where TAppSettings : IAppSettings
     {
         /// <summary>
+        /// Flag that enables logging confgiuration loading from settings or a file
+        /// </summary>
+        public bool UseConfiguration { get; set; }
+
+        /// <summary>
+        /// Path to file with logging configuration
+        /// </summary>
+        public string ConfigurationFile { get; set; }
+
+        /// <summary>
         /// Name of the Azure table for logs. Required
         /// </summary>
         public string LogsTableName { get; set; }

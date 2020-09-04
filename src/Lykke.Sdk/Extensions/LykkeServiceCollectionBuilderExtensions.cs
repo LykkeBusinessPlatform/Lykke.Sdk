@@ -120,52 +120,74 @@ namespace Lykke.Sdk
                 options.SenderName = $"{AppEnvironment.Name} {AppEnvironment.Version}";
             });
 
+            ConfigureLogging(
+                services,
+                serviceOptions,
+                settingsManager);
+
+            serviceOptions.Extend?.Invoke(services, settingsManager);
+
+            if (settingsManager.CurrentValue.MonitoringServiceClient == null)
+                throw new InvalidOperationException("MonitoringServiceClient config section is required");
+
+            return (configurationRoot, settingsManager);
+        }
+
+        private static void ConfigureLogging<TAppSettings>(
+            IServiceCollection services,
+            LykkeServiceOptions<TAppSettings> serviceOptions,
+            IReloadingManagerWithConfiguration<TAppSettings> settingsManager)
+            where TAppSettings : IAppSettings
+        {
             services.AddLykkeLogging();
 
             var loggingOptions = new LykkeLoggingOptions<TAppSettings>();
             serviceOptions.Logs(loggingOptions);
 
-            var settings = settingsManager.CurrentValue;
+            if (loggingOptions.HaveToUseEmptyLogging)
+                return;
 
-            if (!loggingOptions.HaveToUseEmptyLogging)
+            var serilogConfigurator = new SerilogConfigurator();
+            if (!LykkeStarter.IsDebug)
             {
-                var serilogConfiurator = new SerilogConfigurator();
-                if (!LykkeStarter.IsDebug)
+                if (loggingOptions.UseConfiguration)
                 {
-                    if (loggingOptions.AzureTableConnectionStringResolver != null
-                        && !string.IsNullOrWhiteSpace(loggingOptions.LogsTableName))
-                        serilogConfiurator.AddAzureTable(
-                            settingsManager.ConnectionString(loggingOptions.AzureTableConnectionStringResolver).CurrentValue,
-                            loggingOptions.LogsTableName);
-
-                    if (settings.SlackNotifications != null
-                        && !string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.ConnectionString)
-                        && !string.IsNullOrWhiteSpace(settings.SlackNotifications.AzureQueue.QueueName))
-                        serilogConfiurator.AddAzureQueue(
-                            settings.SlackNotifications.AzureQueue.ConnectionString,
-                            settings.SlackNotifications.AzureQueue.QueueName);
-
-                    if (settings.ElasticSearch != null
-                        && !string.IsNullOrWhiteSpace(settings.ElasticSearch.ElasticSearchUrl))
-                        serilogConfiurator.AddElasticsearch(settings.ElasticSearch.ElasticSearchUrl);
-
-                    if (settings.Telegram != null
-                        && !string.IsNullOrWhiteSpace(settings.Telegram.BotToken)
-                        && !string.IsNullOrWhiteSpace(settings.Telegram.ChatId))
-                        serilogConfiurator.AddTelegram(
-                            settings.Telegram.BotToken,
-                            settings.Telegram.ChatId,
-                            settings.Telegram.MinimalLogLevel);
+                    IConfiguration configuration;
+                    if (string.IsNullOrWhiteSpace(loggingOptions.ConfigurationFile))
+                    {
+                        configuration = settingsManager.SettingsConfiguration;
+                    }
+                    else
+                    {
+                        var configBuilder = new ConfigurationBuilder();
+                        configBuilder.AddJsonFile(loggingOptions.ConfigurationFile);
+                        configuration = configBuilder.Build();
+                    }
+                    serilogConfigurator.AddFromConfiguration(configuration);
                 }
-                serilogConfiurator.Configure();
+
+                if (loggingOptions.AzureTableConnectionStringResolver != null)
+                    serilogConfigurator.AddAzureTable(
+                        settingsManager.ConnectionString(loggingOptions.AzureTableConnectionStringResolver).CurrentValue,
+                        loggingOptions.LogsTableName);
+
+                var settings = settingsManager.CurrentValue;
+
+                if (settings.SlackNotifications != null && settings.SlackNotifications.AzureQueue != null)
+                    serilogConfigurator.AddAzureQueue(
+                        settings.SlackNotifications.AzureQueue.ConnectionString,
+                        settings.SlackNotifications.AzureQueue.QueueName);
+
+                if (settings.ElasticSearch != null && settings.ElasticSearch != null)
+                    serilogConfigurator.AddElasticsearch(settings.ElasticSearch.ElasticSearchUrl);
+
+                if (settings.Telegram != null && settings.Telegram != null)
+                    serilogConfigurator.AddTelegram(
+                        settings.Telegram.BotToken,
+                        settings.Telegram.ChatId,
+                        settings.Telegram.MinimalLogLevel);
             }
-
-            serviceOptions.Extend?.Invoke(services, settingsManager);
-
-            if (settings.MonitoringServiceClient == null)
-                throw new InvalidOperationException("MonitoringServiceClient config section is required");
-
-            return (configurationRoot, settingsManager);
+            serilogConfigurator.Configure();
         }
     }
 }
