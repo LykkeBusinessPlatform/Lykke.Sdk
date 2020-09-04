@@ -75,6 +75,7 @@ namespace Lykke.Sdk
                 {
                     x.RoutePrefix = "swagger/ui";
                     x.SwaggerEndpoint($"/swagger/{options.SwaggerOptions.ApiVersion}/swagger.json", options.SwaggerOptions.ApiVersion);
+                    x.EnableDeepLinking();
 
                     if (options.AdditionalSwaggerOptions.Any())
                     {
