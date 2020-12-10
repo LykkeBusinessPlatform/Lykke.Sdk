@@ -40,7 +40,7 @@ namespace Lykke.Sdk
             _shutdownManager = shutdownManager ?? throw new ArgumentNullException(nameof(shutdownManager));
             _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
             _configurationRoot = configurationRoot ?? throw new ArgumentNullException(nameof(configurationRoot));
-            _monitoringServiceClientSettings = monitoringServiceClientSettings ?? throw new ArgumentNullException(nameof(monitoringServiceClientSettings));
+            _monitoringServiceClientSettings = monitoringServiceClientSettings;
 
             _log = logFactory.CreateLog(this);
         }
@@ -58,11 +58,11 @@ namespace Lykke.Sdk
                 if (_hostingEnvironment.IsDevelopment())
                     return;
 
-                if (_monitoringServiceClientSettings?.CurrentValue == null)
-                    throw new ApplicationException("MonitoringServiceClient settings is not provided.");
-
-                await _configurationRoot.RegisterInMonitoringServiceAsync(
-                    _monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier);
+                if (_monitoringServiceClientSettings?.CurrentValue != null)
+                {
+                    await _configurationRoot.RegisterInMonitoringServiceAsync(
+                        _monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier);
+                }
             }
             catch (Exception ex)
             {
