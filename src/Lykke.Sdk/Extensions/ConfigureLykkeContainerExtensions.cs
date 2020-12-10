@@ -26,11 +26,8 @@ namespace Lykke.Sdk
             where TAppSettings : class, IAppSettings
         {
             builder.RegisterInstance(configurationRoot).As<IConfigurationRoot>();
-            if (settings.CurrentValue.MonitoringServiceClient != null)
-            {
-                builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
-                    .As<IReloadingManager<MonitoringServiceClientSettings>>();
-            }
+            builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
+                .As<IReloadingManager<MonitoringServiceClientSettings>>();
 
             builder.RegisterType<AppLifetimeHandler>()
                 .AsSelf()
