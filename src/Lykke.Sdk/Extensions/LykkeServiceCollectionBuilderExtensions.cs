@@ -127,9 +127,6 @@ namespace Lykke.Sdk
 
             serviceOptions.Extend?.Invoke(services, settingsManager);
 
-            if (settingsManager.CurrentValue.MonitoringServiceClient == null)
-                throw new InvalidOperationException("MonitoringServiceClient config section is required");
-
             return (configurationRoot, settingsManager);
         }
 

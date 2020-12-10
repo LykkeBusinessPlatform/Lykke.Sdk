@@ -16,7 +16,7 @@ namespace Lykke.Sdk
     public static class ConfigureLykkeContainerExtensions
     {
         /// <summary>
-        /// Configure IOC continer for Lykke's service.
+        /// Configure IOC container for Lykke's service.
         /// </summary>
         public static void ConfigureLykkeContainer<TAppSettings>(
             this ContainerBuilder builder,
@@ -26,8 +26,11 @@ namespace Lykke.Sdk
             where TAppSettings : class, IAppSettings
         {
             builder.RegisterInstance(configurationRoot).As<IConfigurationRoot>();
-            builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
-                .As<IReloadingManager<MonitoringServiceClientSettings>>();
+            if (settings.CurrentValue.MonitoringServiceClient != null)
+            {
+                builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
+                    .As<IReloadingManager<MonitoringServiceClientSettings>>();
+            }
 
             builder.RegisterType<AppLifetimeHandler>()
                 .AsSelf()
