@@ -14,6 +14,7 @@ namespace Lykke.Sdk.Settings
         public SlackNotificationsSettings SlackNotifications { get; set; }
 
         /// <inheritdoc />
+        [Optional]
         public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
 
         /// <inheritdoc />

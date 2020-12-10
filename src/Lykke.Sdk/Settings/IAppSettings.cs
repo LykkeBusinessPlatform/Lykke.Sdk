@@ -18,6 +18,7 @@ namespace Lykke.Sdk.Settings
         /// <summary>
         /// The monitoring service settings.
         /// </summary>
+        [Optional]
         MonitoringServiceClientSettings MonitoringServiceClient { get; }
 
         /// <summary>
