@@ -61,11 +61,11 @@ namespace Lykke.Sdk
 
                 app.UseLykkeForwardedHeaders();
 
-                // Middleware like authentication needs to be registered before Mvc
-                options.WithMiddleware?.Invoke(app);
-
                 app.UseStaticFiles();
                 app.UseRouting();
+                
+                options.WithMiddleware?.Invoke(app);
+                
                 app.UseEndpoints(endpoints => {
                     endpoints.MapControllers();
                 });
