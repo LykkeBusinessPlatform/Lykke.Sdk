@@ -6,6 +6,7 @@ using Lykke.Common.Log;
 using Lykke.Sdk.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -23,10 +24,12 @@ namespace Lykke.Sdk
         /// <param name="app">IApplicationBuilder implementation.</param>
         /// <param name="appLifetime">IHostApplicationLifetime instance</param>
         /// <param name="configureOptions">Configuration handler for <see cref="LykkeConfigurationOptions"/></param>
+        /// <param name="configureEndpoints">Configuration handler for endpoints, controllers are always mapped</param>
         public static IApplicationBuilder UseLykkeConfiguration(
             this IApplicationBuilder app,
             IHostApplicationLifetime appLifetime,
-            Action<LykkeConfigurationOptions> configureOptions = null)
+            Action<LykkeConfigurationOptions> configureOptions = null,
+            Action<IEndpointRouteBuilder> configureEndpoints = null)
         {
             if (app == null)
             {
@@ -68,6 +71,7 @@ namespace Lykke.Sdk
                 
                 app.UseEndpoints(endpoints => {
                     endpoints.MapControllers();
+                    configureEndpoints?.Invoke(endpoints);
                 });
 
                 app.UseSwagger();
