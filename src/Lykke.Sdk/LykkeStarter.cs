@@ -28,14 +28,28 @@ namespace Lykke.Sdk
         public static Task Start<TStartup>(bool isDebug)
             where TStartup : class
         {
-            return Start<TStartup>(isDebug, 5000);
+            return Start<TStartup>(isDebug, 5000, null);
         }
 
         /// <summary>Starts the service listening to provided port.</summary>
         /// <typeparam name="TStartup">The type of the startup.</typeparam>
         /// <param name="port">Port that the app is listening to.</param>
         /// /// <param name="isDebug">DEBUG/RELEASE mode flag</param>
-        public static async Task Start<TStartup>(bool isDebug, int port)
+        public static Task Start<TStartup>(bool isDebug, int port)
+            where TStartup : class
+        {
+            return Start<TStartup>(isDebug, port, null);
+        }
+
+        /// <summary>Starts the service listening to provided port.</summary>
+        /// <typeparam name="TStartup">The type of the startup.</typeparam>
+        /// <param name="port">Port that the app is listening to.</param>
+        /// <param name="configureHost">IHost additional configurtion</param>
+        /// /// <param name="isDebug">DEBUG/RELEASE mode flag</param>
+        public static async Task Start<TStartup>(
+            bool isDebug,
+            int port,
+            Action<IHost> configureHost)
             where TStartup : class
         {
             IsDebug = isDebug;
@@ -61,6 +75,8 @@ namespace Lykke.Sdk
                         .UseStartup<TStartup>();
                     })
                     .Build();
+                if (configureHost != null)
+                    configureHost(host);
                 await host.RunAsync();
             }
             catch (Exception ex)
