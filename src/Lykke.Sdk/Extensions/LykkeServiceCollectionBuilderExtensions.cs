@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using FluentValidation.AspNetCore;
 using JetBrains.Annotations;
@@ -147,19 +148,38 @@ namespace Lykke.Sdk
             var serilogConfigurator = new SerilogConfigurator();
             if (!LykkeStarter.IsDebug)
             {
-                if (loggingOptions.UseConfiguration)
+                if (!string.IsNullOrWhiteSpace(loggingOptions.LogSettingsUrl))
                 {
-                    IConfiguration configuration;
-                    if (string.IsNullOrWhiteSpace(loggingOptions.ConfigurationFile))
+                    try
                     {
-                        configuration = settingsManager.SettingsConfiguration;
+                        var configBuilder = new ConfigurationBuilder();
+                        var settingsStream = new HttpClient().GetStreamAsync(loggingOptions.LogSettingsUrl).GetAwaiter().GetResult();
+                        configBuilder.AddJsonStream(settingsStream);
+                        var configuration = configBuilder.Build();
+                        serilogConfigurator.AddFromConfiguration(configuration);
                     }
-                    else
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Couldn't download settings from {loggingOptions.LogSettingsUrl}: {ex}");
+                    }
+                }
+                else if (!string.IsNullOrWhiteSpace(loggingOptions.ConfigurationFile))
+                {
+                    try
                     {
                         var configBuilder = new ConfigurationBuilder();
                         configBuilder.AddJsonFile(loggingOptions.ConfigurationFile);
-                        configuration = configBuilder.Build();
+                        var configuration = configBuilder.Build();
+                        serilogConfigurator.AddFromConfiguration(configuration);
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Couldn't load settings from {loggingOptions.ConfigurationFile}: {ex}");
+                    }
+                }
+                else if (loggingOptions.UseConfiguration)
+                {
+                    var configuration = settingsManager.SettingsConfiguration;
                     serilogConfigurator.AddFromConfiguration(configuration);
                 }
 
