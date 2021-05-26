@@ -4,12 +4,10 @@ using System.Net.Http;
 using System.Reflection;
 using FluentValidation.AspNetCore;
 using JetBrains.Annotations;
-using Lykke.Common;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Logs;
 using Lykke.Sdk.ActionFilters;
 using Lykke.Sdk.Controllers;
-using Lykke.Sdk.Settings;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,8 +29,7 @@ namespace Lykke.Sdk
         public static (IConfigurationRoot, IReloadingManager<TAppSettings>) BuildServiceProvider<TAppSettings>(
             this IServiceCollection services,
             Action<LykkeServiceOptions<TAppSettings>> buildServiceOptions)
-
-            where TAppSettings : class, IAppSettings
+            where TAppSettings : class
         {
             if (services == null)
                 throw new ArgumentNullException(nameof(services));
@@ -114,12 +111,7 @@ namespace Lykke.Sdk
                 .AddEnvironmentVariables()
                 .Build();
 
-            var settingsManager = configurationRoot.LoadSettings<TAppSettings>(options =>
-            {
-                options.SetConnString(x => x.SlackNotifications?.AzureQueue.ConnectionString);
-                options.SetQueueName(x => x.SlackNotifications?.AzureQueue.QueueName);
-                options.SenderName = $"{AppEnvironment.Name} {AppEnvironment.Version}";
-            });
+            var settingsManager = configurationRoot.LoadSettings<TAppSettings>(options => {});
 
             ConfigureLogging(
                 services,
@@ -135,7 +127,7 @@ namespace Lykke.Sdk
             IServiceCollection services,
             LykkeServiceOptions<TAppSettings> serviceOptions,
             IReloadingManagerWithConfiguration<TAppSettings> settingsManager)
-            where TAppSettings : IAppSettings
+            where TAppSettings : class
         {
             services.AddLykkeLogging();
 
@@ -187,22 +179,6 @@ namespace Lykke.Sdk
                     serilogConfigurator.AddAzureTable(
                         settingsManager.ConnectionString(loggingOptions.AzureTableConnectionStringResolver).CurrentValue,
                         loggingOptions.LogsTableName);
-
-                var settings = settingsManager.CurrentValue;
-
-                if (settings.SlackNotifications != null && settings.SlackNotifications.AzureQueue != null)
-                    serilogConfigurator.AddAzureQueue(
-                        settings.SlackNotifications.AzureQueue.ConnectionString,
-                        settings.SlackNotifications.AzureQueue.QueueName);
-
-                if (settings.ElasticSearch != null && settings.ElasticSearch != null)
-                    serilogConfigurator.AddElasticsearch(settings.ElasticSearch.ElasticSearchUrl);
-
-                if (settings.Telegram != null && settings.Telegram != null)
-                    serilogConfigurator.AddTelegram(
-                        settings.Telegram.BotToken,
-                        settings.Telegram.ChatId,
-                        settings.Telegram.MinimalLogLevel);
             }
             serilogConfigurator.Configure();
         }

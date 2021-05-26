@@ -1,6 +1,5 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Lykke.Sdk.Settings;
 
 namespace Lykke.Sdk
 {
@@ -9,7 +8,7 @@ namespace Lykke.Sdk
     /// </summary>
     [PublicAPI]
     public class LykkeLoggingOptions<TAppSettings>
-        where TAppSettings : IAppSettings
+        where TAppSettings : class
     {
         /// <summary>Flag for component settings usage for logging configuration</summary>
         public bool UseConfiguration { get; set; }

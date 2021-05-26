@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using FluentValidation.AspNetCore;
 using JetBrains.Annotations;
 using Lykke.Common.ApiLibrary.Exceptions;
-using Lykke.Sdk.Settings;
 using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
@@ -19,7 +18,7 @@ namespace Lykke.Sdk
     /// <typeparam name="TAppSettings">The type of the application settings.</typeparam>
     [PublicAPI]
     public class LykkeServiceOptions<TAppSettings>
-        where TAppSettings : IAppSettings
+        where TAppSettings : class
     {
         /// <summary>
         /// Swagger Options. Required

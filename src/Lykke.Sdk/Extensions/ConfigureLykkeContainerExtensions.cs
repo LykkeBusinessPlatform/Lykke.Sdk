@@ -3,7 +3,6 @@ using System.Reflection;
 using Autofac;
 using JetBrains.Annotations;
 using Lykke.Sdk.Health;
-using Lykke.Sdk.Settings;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
 
@@ -23,11 +22,9 @@ namespace Lykke.Sdk
             IConfigurationRoot configurationRoot,
             IReloadingManager<TAppSettings> settings,
             Action<IModuleRegistration> registerAdditionalModules = null)
-            where TAppSettings : class, IAppSettings
+            where TAppSettings : class
         {
             builder.RegisterInstance(configurationRoot).As<IConfigurationRoot>();
-            builder.RegisterInstance(settings.Nested(x => x.MonitoringServiceClient))
-                .As<IReloadingManager<MonitoringServiceClientSettings>>();
 
             builder.RegisterType<AppLifetimeHandler>()
                 .AsSelf()

@@ -3,11 +3,7 @@ using System.Threading.Tasks;
 using Common.Log;
 using JetBrains.Annotations;
 using Lykke.Common.Log;
-using Lykke.MonitoringServiceApiCaller;
-using Lykke.Sdk.Settings;
-using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace Lykke.Sdk
@@ -20,8 +16,6 @@ namespace Lykke.Sdk
         private readonly IStartupManager _startupManager;
         private readonly IShutdownManager _shutdownManager;
         private readonly IWebHostEnvironment _hostingEnvironment;
-        private readonly IConfigurationRoot _configurationRoot;
-        private readonly IReloadingManager<MonitoringServiceClientSettings> _monitoringServiceClientSettings;
 
         private readonly ILog _log;
 
@@ -30,17 +24,13 @@ namespace Lykke.Sdk
             IHealthNotifier healthNotifier,
             IStartupManager startupManager,
             IShutdownManager shutdownManager,
-            IWebHostEnvironment hostingEnvironment,
-            IConfigurationRoot configurationRoot,
-            IReloadingManager<MonitoringServiceClientSettings> monitoringServiceClientSettings)
+            IWebHostEnvironment hostingEnvironment)
         {
             _logFactory = logFactory ?? throw new ArgumentNullException(nameof(logFactory));
             _healthNotifier = healthNotifier ?? throw new ArgumentNullException(nameof(healthNotifier));
             _startupManager = startupManager ?? throw new ArgumentNullException(nameof(startupManager));
             _shutdownManager = shutdownManager ?? throw new ArgumentNullException(nameof(shutdownManager));
             _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
-            _configurationRoot = configurationRoot ?? throw new ArgumentNullException(nameof(configurationRoot));
-            _monitoringServiceClientSettings = monitoringServiceClientSettings;
 
             _log = logFactory.CreateLog(this);
         }
@@ -57,12 +47,6 @@ namespace Lykke.Sdk
 
                 if (_hostingEnvironment.IsDevelopment())
                     return;
-
-                if (_monitoringServiceClientSettings?.CurrentValue != null)
-                {
-                    await _configurationRoot.RegisterInMonitoringServiceAsync(
-                        _monitoringServiceClientSettings.CurrentValue.MonitoringServiceUrl, _healthNotifier);
-                }
             }
             catch (Exception ex)
             {
