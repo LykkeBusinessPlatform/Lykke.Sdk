@@ -1,4 +1,4 @@
-## 8.0.3 (2023-08-09)
+## [[tbd]] (2023-08-09)
 
-## Added
+### Added
 * New nuget publication workflow
