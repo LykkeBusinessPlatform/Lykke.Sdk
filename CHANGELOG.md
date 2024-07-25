@@ -1,4 +1,4 @@
-## [[tbd]] (2024-07-25)
+## 9.0.1 (2024-07-25)
 
 ### Updated
 * Bump Lykke.Common.ApiLibrary -> 5.0.0
