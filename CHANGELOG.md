@@ -1,3 +1,8 @@
+## [[tbd]] (2024-07-25)
+
+### Changed
+* Migrate to .NET 8.0
+
 ## 8.0.5 (2023-08-16)
 
 ### Changed
