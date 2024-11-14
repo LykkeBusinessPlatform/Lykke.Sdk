@@ -1,4 +1,4 @@
-## [[tbd]] ([[date]])
+## 9.1.0 ([[date]])
 
 ### Added
 * Use `HttpConfigurationProvider` when the `SettingsUrl` environment variable is an HTTP link
