@@ -4,7 +4,9 @@ using System.Threading.Tasks;
 using Autofac.Extensions.DependencyInjection;
 using JetBrains.Annotations;
 using Lykke.Common;
+using Lykke.SettingsReader.ConfigurationProvider;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
@@ -61,6 +63,16 @@ namespace Lykke.Sdk
 
             try
             {
+                var configurationBuilder = new ConfigurationBuilder()
+                    .AddEnvironmentVariables();
+
+                if (Environment.GetEnvironmentVariable("SettingsUrl")?.StartsWith("http") ?? false)
+                {
+                    configurationBuilder.AddHttpSourceConfiguration();
+                }
+
+                var configuration = configurationBuilder.Build();
+
                 var host = Host.CreateDefaultBuilder()
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseServiceProviderFactory(new AutofacServiceProviderFactory())
@@ -72,6 +84,7 @@ namespace Lykke.Sdk
                             // Set properties and call methods on options
                         })
                         .UseUrls($"http://*:{port}")
+                        .UseConfiguration(configuration)
                         .UseStartup<TStartup>();
                     })
                     .Build();

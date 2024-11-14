@@ -1,3 +1,8 @@
+## [[tbd]] ([[date]])
+
+### Added
+* Use `HttpConfigurationProvider` when the `SettingsUrl` environment variable is an HTTP link
+
 ## 9.0.1 (2024-07-25)
 
 ### Updated

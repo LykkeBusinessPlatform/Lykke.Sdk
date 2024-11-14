@@ -21,7 +21,7 @@
     <PackageReference Include="LykkeBiz.Common.ApiLibrary" Version="5.0.0" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.5" />
     <PackageReference Include="LykkeBiz.Logs" Version="8.4.0" />
-    <PackageReference Include="LykkeBiz.SettingsReader" Version="6.0.4" />
+    <PackageReference Include="LykkeBiz.SettingsReader" Version="9.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.1" />
